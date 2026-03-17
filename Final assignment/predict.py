@@ -32,7 +32,7 @@ IMAGE_DIR = "/data"
 OUTPUT_DIR = "/output"
 MODEL_PATH = "/app/model.pt"
 
-
+#can be customized
 def preprocess(img: Image.Image) -> torch.Tensor:
     # Implement your preprocessing steps here
     # For example, resizing, normalization, etc.
@@ -49,6 +49,22 @@ def preprocess(img: Image.Image) -> torch.Tensor:
     return img
 
 
+# def preprocess(img: Image.Image) -> torch.Tensor:
+#     # Implement your preprocessing steps here
+#     # For example, resizing, normalization, etc.
+#     # Return a tensor suitable for model input
+#     transform = Compose([
+#         ToImage(),
+#         Resize(size=(256, 256), interpolation=InterpolationMode.BILINEAR),
+#         ToDtype(dtype=torch.float32, scale=True),
+#         Normalize(mean=(0.5,), std=(0.5,)),
+#     ])
+
+#     img = transform(img)
+#     img = img.unsqueeze(0)  # Add batch dimension
+#     return img
+
+#can be customized
 def postprocess(pred: torch.Tensor, original_shape: tuple) -> np.ndarray:
     # Implement your postprocessing steps here
     # For example, resizing back to original shape, converting to color mask, etc.
@@ -61,6 +77,19 @@ def postprocess(pred: torch.Tensor, original_shape: tuple) -> np.ndarray:
     prediction_numpy = prediction_numpy.squeeze()  # Remove batch and channel dimensions if necessary
 
     return prediction_numpy
+
+# def postprocess(pred: torch.Tensor, original_shape: tuple) -> np.ndarray:
+#     # Implement your postprocessing steps here
+#     # For example, resizing back to original shape, converting to color mask, etc.
+#     # Return a numpy array suitable for saving as an image
+#     pred_soft = nn.Softmax(dim=1)(pred)
+#     pred_max = torch.argmax(pred_soft, dim=1, keepdim=True)  # Get the class with the highest probability
+#     prediction = Resize(size=original_shape, interpolation=InterpolationMode.NEAREST)(pred_max)
+
+#     prediction_numpy = prediction.cpu().detach().numpy()
+#     prediction_numpy = prediction_numpy.squeeze()  # Remove batch and channel dimensions if necessary
+
+#     return prediction_numpy
 
 
 def main():
