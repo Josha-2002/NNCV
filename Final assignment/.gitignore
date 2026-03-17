@@ -2,3 +2,8 @@ data/
 *.sif
 *.out
 *.tar
+local_data/
+local_output/
+older_models/
+*.pt
+*.pth
