@@ -2,9 +2,9 @@ wandb login
 
 python3 train.py \
     --data-dir ./data/cityscapes \
-    --batch-size 64 \
-    --epochs 100 \
+    --batch-size 16 \
+    --epochs 20 \
     --lr 0.001 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "unet-training" \
+    --experiment-id "segformer-training" 
