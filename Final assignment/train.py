@@ -55,6 +55,50 @@ def convert_train_id_to_color(prediction: torch.Tensor) -> torch.Tensor:
 
     return color_image
 
+###################################################
+
+#Metric class to compute IoU and Dice Coefficient for semantic segmentation
+class SegmentationMetrics:
+    def __init__(self, num_classes=19, ignore_index=255):
+        self.num_classes = num_classes
+        self.ignore_index = ignore_index
+        self.total_intersections = torch.zeros(num_classes)
+        self.total_unions = torch.zeros(num_classes)
+        self.total_targets = torch.zeros(num_classes)
+        self.total_preds = torch.zeros(num_classes)
+
+    def update(self, preds, target):
+        preds = preds.contiguous().view(-1)
+        target = target.contiguous().view(-1)
+        
+        mask = (target != self.ignore_index)
+        preds = preds[mask]
+        target = target[mask]
+        
+        for cls in range(self.num_classes):
+            pred_inds = (preds == cls)
+            target_inds = (target == cls)
+            
+            intersection = (pred_inds & target_inds).sum()
+            union = pred_inds.sum() + target_inds.sum() - intersection
+            
+            self.total_intersections[cls] += intersection.cpu()
+            self.total_unions[cls] += union.cpu()
+            self.total_targets[cls] += target_inds.sum().cpu()
+            self.total_preds[cls] += pred_inds.sum().cpu()
+
+    def compute(self):
+        # Only compute for classes that actually appeared in the targets
+        valid_classes = self.total_targets > 0
+        
+        ious = self.total_intersections[valid_classes] / torch.clamp(self.total_unions[valid_classes], min=1)
+        dices = (2.0 * self.total_intersections[valid_classes]) / torch.clamp(self.total_targets[valid_classes] + self.total_preds[valid_classes], min=1)
+        
+        return ious.mean().item(), dices.mean().item()
+
+
+
+###################################################
 
 def get_args_parser():
 
@@ -186,6 +230,10 @@ def main(args):
         # Validation
         model.eval()
         print("Running validation...")
+        
+        # Initialize the metric tracker for this epoch
+        val_metrics = SegmentationMetrics(num_classes=19, ignore_index=255)
+        
         with torch.no_grad():
             losses = []
             for i, (images, labels) in enumerate(valid_dataloader):
@@ -196,31 +244,44 @@ def main(args):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
                 losses.append(loss.item())
+                
+                # Get the predicted classes (argmax over the channel dimension)
+                predictions = outputs.softmax(1).argmax(1)
+                
+                # Update IoU and Dice metrics
+                val_metrics.update(predictions, labels)
             
                 # Only process and upload image grids if W&B is active!
                 if i == 0 and not args.disable_wandb:
-                    predictions = outputs.softmax(1).argmax(1).unsqueeze(1)
-                    labels = labels.unsqueeze(1)
+                    predictions_img_format = predictions.unsqueeze(1)
+                    labels_img_format = labels.unsqueeze(1)
 
-                    predictions = convert_train_id_to_color(predictions)
-                    labels = convert_train_id_to_color(labels)
+                    predictions_colored = convert_train_id_to_color(predictions_img_format)
+                    labels_colored = convert_train_id_to_color(labels_img_format)
 
-                    predictions_img = make_grid(predictions.cpu(), nrow=8).permute(1, 2, 0).numpy()
-                    labels_img = make_grid(labels.cpu(), nrow=8).permute(1, 2, 0).numpy()
+                    predictions_img = make_grid(predictions_colored.cpu(), nrow=8).permute(1, 2, 0).numpy()
+                    labels_img = make_grid(labels_colored.cpu(), nrow=8).permute(1, 2, 0).numpy()
 
                     wandb.log({
                         "predictions": [wandb.Image(predictions_img)],
                         "labels": [wandb.Image(labels_img)],
                     }, step=(epoch + 1) * len(train_dataloader) - 1)
             
+            # Calculate final validation metrics
             valid_loss = sum(losses) / len(losses)
-            print(f"Epoch {epoch+1} Validation Loss: {valid_loss:.4f}")
+            mean_iou, mean_dice = val_metrics.compute()
+            
+            print(f"Epoch {epoch+1} | Val Loss: {valid_loss:.4f} | Mean IoU: {mean_iou:.4f} | Mean Dice: {mean_dice:.4f}")
             
             if not args.disable_wandb:
-                wandb.log({"valid_loss": valid_loss}, step=(epoch + 1) * len(train_dataloader) - 1)
+                wandb.log({
+                    "valid_loss": valid_loss,
+                    "mean_iou": mean_iou,
+                    "mean_dice": mean_dice
+                }, step=(epoch + 1) * len(train_dataloader) - 1)
 
-            # Save best model
-            if valid_loss < best_valid_loss:
+            # Save best model (We can now save based on IoU instead of just loss!)
+            if valid_loss < best_valid_loss: # You could change this to `if mean_iou > best_iou:` if you prefer!
                 best_valid_loss = valid_loss
                 if current_best_model_path:
                     os.remove(current_best_model_path)
@@ -229,8 +290,7 @@ def main(args):
                     f"best_model-epoch={epoch:04}-val_loss={valid_loss:04}.pt"
                 )
                 torch.save(model.state_dict(), current_best_model_path)
-                print(f"New best model saved! (Loss: {valid_loss:.4f})")
-        
+                print(f"New best model saved! (Loss: {valid_loss:.4f}, IoU: {mean_iou:.4f})")        
     print("\nTraining complete!")
 
     # Save the final model

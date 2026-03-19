@@ -7,4 +7,4 @@ python3 train.py \
     --lr 0.00006 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "segformer-training" 
+    --experiment-id "segformer-b0-v2" 
