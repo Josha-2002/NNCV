@@ -40,9 +40,8 @@ def preprocess(img: Image.Image) -> torch.Tensor:
     # SegFormer/ImageNet standard normalization
     transform = Compose([
         ToImage(),
-        Resize(size=(256, 256), interpolation=InterpolationMode.BILINEAR),
+        Resize(size=(512, 1024), interpolation=InterpolationMode.BILINEAR), # <--- CHANGED!
         ToDtype(dtype=torch.float32, scale=True),
-        # Standard ImageNet Mean/Std used by NVIDIA for SegFormer
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 

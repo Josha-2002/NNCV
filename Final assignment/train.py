@@ -141,16 +141,15 @@ def main(args):
     # Define the transforms to apply to the data
     img_transform = Compose([
         ToImage(),
-        Resize((256, 256)),
+        Resize((512, 1024)), # <--- CHANGED!
         ToDtype(torch.float32, scale=True),
-        # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     # Target transform (mask)
     target_transform = Compose([
         ToImage(),
-        Resize((256, 256), interpolation=InterpolationMode.NEAREST),
+        Resize((512, 1024), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
         ToDtype(torch.int64),
     ])
 
