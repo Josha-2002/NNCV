@@ -34,14 +34,16 @@ MODEL_PATH = "/app/model.pt"
 
 #can be customized
 def preprocess(img: Image.Image) -> torch.Tensor:
-    # Implement your preprocessing steps here
-    # For example, resizing, normalization, etc.
-    # Return a tensor suitable for model input
+    # Ensure image is RGB
+    img = img.convert("RGB")
+    
+    # SegFormer/ImageNet standard normalization
     transform = Compose([
         ToImage(),
         Resize(size=(256, 256), interpolation=InterpolationMode.BILINEAR),
         ToDtype(dtype=torch.float32, scale=True),
-        Normalize(mean=(0.5,), std=(0.5,)),
+        # Standard ImageNet Mean/Std used by NVIDIA for SegFormer
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     img = transform(img)
@@ -95,18 +97,35 @@ def postprocess(pred: torch.Tensor, original_shape: tuple) -> np.ndarray:
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    # Set Transformers to offline mode to prevent the container from 
+    # trying to reach the internet on the TU/e server
+    import os
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+
     # Load model
-    model = Model()
+    # Note: Model() uses your SegFormer architecture from model.py
+    model = Model(n_classes=19) 
+    
+    # Load the weights
+    # We use weights_only=False because SegFormer objects have complex structures
     state_dict = torch.load(
         MODEL_PATH, 
         map_location=device,
-        weights_only=True,
+        weights_only=False, 
     )
-    model.load_state_dict(
-        state_dict, 
-        strict=True,  # Ensure the state dict matches the model architecture
-    )
+    
+    # Load into the model. We use strict=False because the HuggingFace wrapper 
+    # often adds/renames internal metadata keys that don't affect prediction.
+    model.load_state_dict(state_dict, strict=False)
+    
     model.eval().to(device)
+    print("Model loaded successfully.")
+
+
+
+
+
+    
 
     image_files = list(Path(IMAGE_DIR).glob("*.png"))  # DO NOT CHANGE, IMAGES WILL BE PROVIDED IN THIS FORMAT
     print(f"Found {len(image_files)} images to process.")

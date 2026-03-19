@@ -99,7 +99,8 @@ def main(args):
         ToImage(),
         Resize((256, 256)),
         ToDtype(torch.float32, scale=True),
-        Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     # Target transform (mask)
@@ -141,6 +142,7 @@ def main(args):
     backbone_params = model.segformer.segformer.parameters()
     head_params = model.segformer.decode_head.parameters()
 
+    # Differential Learning Rates
     optimizer = torch.optim.AdamW([
         {'params': backbone_params, 'lr': args.lr * 0.01}, 
         {'params': head_params, 'lr': args.lr}            

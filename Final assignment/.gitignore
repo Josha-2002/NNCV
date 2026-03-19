@@ -7,3 +7,4 @@ local_output/
 older_models/
 *.pt
 *.pth
+local_test_env/
