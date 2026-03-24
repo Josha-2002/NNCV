@@ -243,13 +243,24 @@ def main(args):
             if (i + 1) % 10 == 0 or (i + 1) == len(train_dataloader):
                 print(f"Batch [{i+1}/{len(train_dataloader)}], Train Loss: {loss.item():.4f}")
 
+            #------------SegFormer-specific logging (uncomment if using SegFormer)------------#
+            # if not args.disable_wandb:
+            #     wandb.log({
+            #         "train_loss": loss.item(),
+            #         "learning_rate_head": optimizer.param_groups[1]['lr'],
+            #         "epoch": epoch + 1,
+            #     }, step=epoch * len(train_dataloader) + i)
+            #------------SegFormer-specific logging (uncomment if using SegFormer)------------#
+
+            #------------UNet-specific logging (uncomment if using UNet)------------#
             if not args.disable_wandb:
                 wandb.log({
                     "train_loss": loss.item(),
-                    "learning_rate_head": optimizer.param_groups[1]['lr'],
+                    "learning_rate": optimizer.param_groups[0]['lr'], # <--- FIXED! (0 instead of 1)
                     "epoch": epoch + 1,
                 }, step=epoch * len(train_dataloader) + i)
-            
+            #------------UNet-specific logging (uncomment if using UNet)------------#
+
         # Validation
         model.eval()
         print("Running validation...")
