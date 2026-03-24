@@ -181,15 +181,17 @@ def main(args):
     # Define the loss function
     criterion = nn.CrossEntropyLoss(ignore_index=255)
 
-    # Define the optimizer with Differential Learning Rates
-    backbone_params = model.segformer.segformer.parameters()
-    head_params = model.segformer.decode_head.parameters()
+    # --- UNET OPTIMIZER ---
+    # Use a standard learning rate for the whole model
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    # Differential Learning Rates
-    optimizer = torch.optim.AdamW([
-        {'params': backbone_params, 'lr': args.lr * 0.01}, 
-        {'params': head_params, 'lr': args.lr}            
-    ])
+    # --- SEGFORMER OPTIMIZER (Commented out for now) ---
+    # backbone_params = model.segformer.segformer.parameters()
+    # head_params = model.segformer.decode_head.parameters()
+    # optimizer = torch.optim.AdamW([
+    #     {'params': backbone_params, 'lr': args.lr * 0.01}, 
+    #     {'params': head_params, 'lr': args.lr}            
+    # ])
 
     # Training loop
     best_valid_loss = float('inf')
