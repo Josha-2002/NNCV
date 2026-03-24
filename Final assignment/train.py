@@ -138,20 +138,40 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
+
+    #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
     # Define the transforms to apply to the data
     img_transform = Compose([
-        ToImage(),
-        Resize((512, 1024)), # <--- CHANGED!
-        ToDtype(torch.float32, scale=True),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ToImage(),
+    Resize((256, 256)),
+    ToDtype(torch.float32, scale=True),
+    Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
     # Target transform (mask)
     target_transform = Compose([
         ToImage(),
-        Resize((512, 1024), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
-        ToDtype(torch.int64),
+        Resize((256, 256), interpolation=InterpolationMode.NEAREST),
+        ToDtype(torch.int64),  # no scaling
     ])
+    #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
+
+    #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
+    # # Define the transforms to apply to the data
+    # img_transform = Compose([
+    #     ToImage(),
+    #     Resize((512, 1024)), # <--- CHANGED!
+    #     ToDtype(torch.float32, scale=True),
+    #     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    # ])
+
+    # # Target transform (mask)
+    # target_transform = Compose([
+    #     ToImage(),
+    #     Resize((512, 1024), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
+    #     ToDtype(torch.int64),
+    # ])
+    #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
 
     # Load the dataset
     train_dataset = Cityscapes(
@@ -180,11 +200,12 @@ def main(args):
 
     # Define the loss function
     criterion = nn.CrossEntropyLoss(ignore_index=255)
-
-    # --- UNET OPTIMIZER ---
+    #-------------------UNET OPTIMIZER-------------------#
     # Use a standard learning rate for the whole model
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    #-------------------UNET OPTIMIZER-------------------#
 
+    #-------------------SEGFORMER OPTIMIZER-------------------#
     # --- SEGFORMER OPTIMIZER (Commented out for now) ---
     # backbone_params = model.segformer.segformer.parameters()
     # head_params = model.segformer.decode_head.parameters()
@@ -192,6 +213,7 @@ def main(args):
     #     {'params': backbone_params, 'lr': args.lr * 0.01}, 
     #     {'params': head_params, 'lr': args.lr}            
     # ])
+    #-------------------SEGFORMER OPTIMIZER-------------------#
 
     # Training loop
     best_valid_loss = float('inf')
