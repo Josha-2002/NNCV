@@ -58,6 +58,49 @@ def convert_train_id_to_color(prediction: torch.Tensor) -> torch.Tensor:
 ###################################################
 
 #Metric class to compute IoU and Dice Coefficient for semantic segmentation
+#only  computes the IoU and Dice for classes that actually appear in the targets to avoid skewing metrics with classes that are never present in the validation set (e.g., "train" or "motorcycle" in Cityscapes' val split)
+# class SegmentationMetrics:
+#     def __init__(self, num_classes=19, ignore_index=255):
+#         self.num_classes = num_classes
+#         self.ignore_index = ignore_index
+#         self.total_intersections = torch.zeros(num_classes)
+#         self.total_unions = torch.zeros(num_classes)
+#         self.total_targets = torch.zeros(num_classes)
+#         self.total_preds = torch.zeros(num_classes)
+
+#     def update(self, preds, target):
+#         preds = preds.contiguous().view(-1)
+#         target = target.contiguous().view(-1)
+        
+#         mask = (target != self.ignore_index)
+#         preds = preds[mask]
+#         target = target[mask]
+        
+#         for cls in range(self.num_classes):
+#             pred_inds = (preds == cls)
+#             target_inds = (target == cls)
+            
+#             intersection = (pred_inds & target_inds).sum()
+#             union = pred_inds.sum() + target_inds.sum() - intersection
+            
+#             self.total_intersections[cls] += intersection.cpu()
+#             self.total_unions[cls] += union.cpu()
+#             self.total_targets[cls] += target_inds.sum().cpu()
+#             self.total_preds[cls] += pred_inds.sum().cpu()
+
+#     def compute(self):
+#         # Only compute for classes that actually appeared in the targets
+#         valid_classes = self.total_targets > 0
+        
+#         ious = self.total_intersections[valid_classes] / torch.clamp(self.total_unions[valid_classes], min=1)
+#         dices = (2.0 * self.total_intersections[valid_classes]) / torch.clamp(self.total_targets[valid_classes] + self.total_preds[valid_classes], min=1)
+        
+#         return ious.mean().item(), dices.mean().item()
+###################################################
+
+
+
+#---------------------New  SegmentationMetrics class with super-category metrics (uncomment if you want to use this instead of the simpler version above)---------------------# 
 class SegmentationMetrics:
     def __init__(self, num_classes=19, ignore_index=255):
         self.num_classes = num_classes
@@ -87,18 +130,37 @@ class SegmentationMetrics:
             self.total_targets[cls] += target_inds.sum().cpu()
             self.total_preds[cls] += pred_inds.sum().cpu()
 
-    def compute(self):
-        # Only compute for classes that actually appeared in the targets
-        valid_classes = self.total_targets > 0
+    def _get_category_metrics(self, class_indices):
+        """Helper to calculate IoU and Dice for a specific subset of classes"""
+        valid = self.total_targets[class_indices] > 0
+        if not valid.any():
+            return 0.0, 0.0 # Return 0 if these classes aren't in the validation batch
         
-        ious = self.total_intersections[valid_classes] / torch.clamp(self.total_unions[valid_classes], min=1)
-        dices = (2.0 * self.total_intersections[valid_classes]) / torch.clamp(self.total_targets[valid_classes] + self.total_preds[valid_classes], min=1)
+        valid_indices = torch.tensor(class_indices)[valid]
+        intersections = self.total_intersections[valid_indices]
+        unions = self.total_unions[valid_indices]
+        targets = self.total_targets[valid_indices]
+        preds = self.total_preds[valid_indices]
+        
+        ious = intersections / torch.clamp(unions, min=1)
+        dices = (2.0 * intersections) / torch.clamp(targets + preds, min=1)
         
         return ious.mean().item(), dices.mean().item()
 
+    def compute(self):
+        # Overall Mean Metrics
+        mean_iou, mean_dice = self._get_category_metrics(list(range(self.num_classes)))
+        
+        # Super-Category: Human (11: Person, 12: Rider)
+        human_iou, human_dice = self._get_category_metrics([11, 12])
+        
+        # Super-Category: Vehicle (13: Car, 14: Truck, 15: Bus, 16: Train, 17: Motorcycle, 18: Bicycle)
+        vehicle_iou, vehicle_dice = self._get_category_metrics([13, 14, 15, 16, 17, 18])
+        
+        return mean_iou, mean_dice, human_iou, human_dice, vehicle_iou, vehicle_dice
+#_---------------------New with different small categories (uncomment if you want to use these instead of the human/vehicle split)---------------------#
 
 
-###################################################
 
 def get_args_parser():
 
@@ -139,38 +201,38 @@ def main(args):
     print(f"Using device: {device}")
 
 
-    #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
-    # Define the transforms to apply to the data
-    img_transform = Compose([
-    ToImage(),
-    Resize((256, 256)),
-    ToDtype(torch.float32, scale=True),
-    Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-    ])
-
-    # Target transform (mask)
-    target_transform = Compose([
-        ToImage(),
-        Resize((256, 256), interpolation=InterpolationMode.NEAREST),
-        ToDtype(torch.int64),  # no scaling
-    ])
-    #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
-
-    #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
+    # #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
     # # Define the transforms to apply to the data
     # img_transform = Compose([
-    #     ToImage(),
-    #     Resize((512, 1024)), # <--- CHANGED!
-    #     ToDtype(torch.float32, scale=True),
-    #     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    # ToImage(),
+    # Resize((256, 256)),
+    # ToDtype(torch.float32, scale=True),
+    # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     # ])
 
     # # Target transform (mask)
     # target_transform = Compose([
     #     ToImage(),
-    #     Resize((512, 1024), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
-    #     ToDtype(torch.int64),
+    #     Resize((256, 256), interpolation=InterpolationMode.NEAREST),
+    #     ToDtype(torch.int64),  # no scaling
     # ])
+    # #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
+
+    #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
+    # Define the transforms to apply to the data
+    img_transform = Compose([
+        ToImage(),
+        Resize((256, 512)), # <--- CHANGED! ratio is now 1:2 to better match Cityscapes' original aspect ratio
+        ToDtype(torch.float32, scale=True),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+    # Target transform (mask)
+    target_transform = Compose([
+        ToImage(),
+        Resize((256, 512), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
+        ToDtype(torch.int64),
+    ])
     #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
 
     # Load the dataset
@@ -202,7 +264,7 @@ def main(args):
     criterion = nn.CrossEntropyLoss(ignore_index=255)
     #-------------------UNET OPTIMIZER-------------------#
     # Use a standard learning rate for the whole model
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     #-------------------UNET OPTIMIZER-------------------#
 
     #-------------------SEGFORMER OPTIMIZER-------------------#
@@ -214,6 +276,11 @@ def main(args):
     #     {'params': head_params, 'lr': args.lr}            
     # ])
     #-------------------SEGFORMER OPTIMIZER-------------------#
+
+    #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
+    # 1. Use a standard optimizer for the whole model
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
 
     # Training loop
     best_valid_loss = float('inf')
@@ -243,23 +310,13 @@ def main(args):
             if (i + 1) % 10 == 0 or (i + 1) == len(train_dataloader):
                 print(f"Batch [{i+1}/{len(train_dataloader)}], Train Loss: {loss.item():.4f}")
 
-            #------------SegFormer-specific logging (uncomment if using SegFormer)------------#
-            # if not args.disable_wandb:
-            #     wandb.log({
-            #         "train_loss": loss.item(),
-            #         "learning_rate_head": optimizer.param_groups[1]['lr'],
-            #         "epoch": epoch + 1,
-            #     }, step=epoch * len(train_dataloader) + i)
-            #------------SegFormer-specific logging (uncomment if using SegFormer)------------#
-
-            #------------UNet-specific logging (uncomment if using UNet)------------#
+            # Universal W&B Logging (Works for U-Net, Base SegFormer, and Fine-Tuned SegFormer)
             if not args.disable_wandb:
                 wandb.log({
                     "train_loss": loss.item(),
-                    "learning_rate": optimizer.param_groups[0]['lr'], # <--- FIXED! (0 instead of 1)
+                    "learning_rate": optimizer.param_groups[-1]['lr'], # Universal magic index!
                     "epoch": epoch + 1,
                 }, step=epoch * len(train_dataloader) + i)
-            #------------UNet-specific logging (uncomment if using UNet)------------#
 
         # Validation
         model.eval()
@@ -303,15 +360,19 @@ def main(args):
             
             # Calculate final validation metrics
             valid_loss = sum(losses) / len(losses)
-            mean_iou, mean_dice = val_metrics.compute()
+            mean_iou, mean_dice, human_iou, human_dice, vehicle_iou, vehicle_dice = val_metrics.compute()
             
-            print(f"Epoch {epoch+1} | Val Loss: {valid_loss:.4f} | Mean IoU: {mean_iou:.4f} | Mean Dice: {mean_dice:.4f}")
+            print(f"Epoch {epoch+1} | Val Loss: {valid_loss:.4f} | Mean IoU: {mean_iou:.4f} | Human IoU: {human_iou:.4f} | Vehicle IoU: {vehicle_iou:.4f}")
             
             if not args.disable_wandb:
                 wandb.log({
                     "valid_loss": valid_loss,
                     "mean_iou": mean_iou,
-                    "mean_dice": mean_dice
+                    "mean_dice": mean_dice,
+                    "human_iou": human_iou,
+                    "human_dice": human_dice,
+                    "vehicle_iou": vehicle_iou,
+                    "vehicle_dice": vehicle_dice
                 }, step=(epoch + 1) * len(train_dataloader) - 1)
 
             # Save best model (We can now save based on IoU instead of just loss!)
