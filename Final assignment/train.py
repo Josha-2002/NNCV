@@ -222,7 +222,8 @@ def main(args):
     # Define the transforms to apply to the data
     img_transform = Compose([
         ToImage(),
-        Resize((256, 512)), # <--- CHANGED! ratio is now 1:2 to better match Cityscapes' original aspect ratio
+        Resize((512, 1024)), # <--- ORIGINAL SIZE! You can change this to (256, 512) if you want to speed up training at the cost of some accuracy. Just make sure to adjust the Resize in the target_transform accordingly!
+        # Resize((256, 512)), # <--- CHANGED! ratio is now 1:2 to better match Cityscapes' original aspect ratio
         ToDtype(torch.float32, scale=True),
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
@@ -230,7 +231,8 @@ def main(args):
     # Target transform (mask)
     target_transform = Compose([
         ToImage(),
-        Resize((256, 512), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
+        # Resize((256, 512), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
+        Resize((512, 1024), interpolation=InterpolationMode.NEAREST), # <--- ORIGINAL SIZE! Adjust this if you changed the image resize above.
         ToDtype(torch.int64),
     ])
     #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#

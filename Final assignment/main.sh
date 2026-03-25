@@ -2,12 +2,12 @@ wandb login
 
 python3 train.py \
     --data-dir ./data/cityscapes \
-    --batch-size 16 \
+    --batch-size 8 \
     --epochs 10 \
     --lr 0.00001 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "segformer-b0-cityscape-v4"
+    --experiment-id "segformer-b0-cityscape-512x1024-v5"
 
 
 # wandb login
