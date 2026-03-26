@@ -23,7 +23,7 @@ from torchvision.transforms.v2 import (
 )
 
 from model import Model
-
+from config import IMG_SIZE
 # Fixed paths inside participant container
 # Do NOT chnage the paths, these are fixed locations where the server will 
 # provide input data and expect output data.
@@ -41,7 +41,7 @@ def preprocess(img: Image.Image) -> torch.Tensor:
     transform = Compose([
         ToImage(),
         # Resize(size=(256, 512), interpolation=InterpolationMode.BILINEAR), # <--- CHANGED!
-        Resize((512, 1024), interpolation=InterpolationMode.BILINEAR), # <--- ORIGINAL SIZE! Adjust this if you changed the image resize above.
+        Resize(IMG_SIZE, interpolation=InterpolationMode.BILINEAR), # <--- ORIGINAL SIZE! Adjust this if you changed the image resize above.
         ToDtype(dtype=torch.float32, scale=True),
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])

@@ -32,7 +32,7 @@ from torchvision.transforms.v2 import (
 )
 
 from model import Model
-
+from config import IMG_SIZE
 
 # Mapping class IDs to train IDs
 id_to_trainid = {cls.id: cls.train_id for cls in Cityscapes.classes}
@@ -222,7 +222,7 @@ def main(args):
     # Define the transforms to apply to the data
     img_transform = Compose([
         ToImage(),
-        Resize((512, 1024)), # <--- ORIGINAL SIZE! You can change this to (256, 512) if you want to speed up training at the cost of some accuracy. Just make sure to adjust the Resize in the target_transform accordingly!
+        Resize(IMG_SIZE), # <--- ORIGINAL SIZE! You can change this to (256, 512) if you want to speed up training at the cost of some accuracy. Just make sure to adjust the Resize in the target_transform accordingly!
         # Resize((256, 512)), # <--- CHANGED! ratio is now 1:2 to better match Cityscapes' original aspect ratio
         ToDtype(torch.float32, scale=True),
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -232,7 +232,7 @@ def main(args):
     target_transform = Compose([
         ToImage(),
         # Resize((256, 512), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
-        Resize((512, 1024), interpolation=InterpolationMode.NEAREST), # <--- ORIGINAL SIZE! Adjust this if you changed the image resize above.
+        Resize(IMG_SIZE, interpolation=InterpolationMode.NEAREST), # <--- ORIGINAL SIZE! Adjust this if you changed the image resize above.
         ToDtype(torch.int64),
     ])
     #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
