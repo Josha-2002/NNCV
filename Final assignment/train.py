@@ -200,25 +200,6 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-
-    # #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
-    # # Define the transforms to apply to the data
-    # img_transform = Compose([
-    # ToImage(),
-    # Resize((256, 256)),
-    # ToDtype(torch.float32, scale=True),
-    # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-    # ])
-
-    # # Target transform (mask)
-    # target_transform = Compose([
-    #     ToImage(),
-    #     Resize((256, 256), interpolation=InterpolationMode.NEAREST),
-    #     ToDtype(torch.int64),  # no scaling
-    # ])
-    # #-------------------UNET-SPECIFIC TRANSFORMS-------------------#
-
-    #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
     # Define the transforms to apply to the data
     img_transform = Compose([
         ToImage(),
@@ -262,8 +243,51 @@ def main(args):
     # Define the model
     model = Model(in_channels=3, n_classes=19).to(device)
 
+    # Define the loss function with class imbalance weighting (you can adjust these weights based on the frequency of classes in Cityscapes or your specific needs)
+    # 0:road, 1:sidewalk, 2:building, 3:wall, 4:fence, 5:pole, 6:t-light, 7:t-sign, 8:veg, 9:terrain, 10:sky
+    # 11:person, 12:rider, 13:car, 14:truck, 15:bus, 16:train, 17:motorcycle, 18:bicycle
+    # 1. PRINT THE CLASSES TO VERIFY
+    print("\n--- Cityscapes Class Weights Mapping ---")
+    for cls in Cityscapes.classes:
+        # We only care about the 19 official training classes (ignore 255 and -1)
+        if cls.train_id not in [255, -1]:
+            print(f"Train ID {cls.train_id}: {cls.name}")
+    print("----------------------------------------\n")
+
+    # 2. DEFINE THE WEIGHTS
+    # The order of this list exactly matches Train IDs 0 through 18!
+    class_weights = torch.tensor([
+        0.5, # 0: road          (Suppress)
+        0.8, # 1: sidewalk      (Suppress)
+        0.5, # 2: building      (Suppress)
+        1.0, # 3: wall
+        1.2, # 4: fence
+        1.2, # 5: pole
+        1.5, # 6: traffic light (Boost)
+        1.5, # 7: traffic sign  (Boost)
+        0.5, # 8: vegetation    (Suppress)
+        1.0, # 9: terrain
+        0.5, # 10: sky          (Suppress)
+        3.0, # 11: person       (SUPER BOOST)
+        3.0, # 12: rider        (SUPER BOOST)
+        1.2, # 13: car          (Boost)
+        2.0, # 14: truck        (Boost)
+        2.0, # 15: bus          (Boost)
+        2.0, # 16: train        (Boost)
+        3.0, # 17: motorcycle   (SUPER BOOST)
+        3.0  # 18: bicycle      (SUPER BOOST)
+    ]).to(device)
+
+    # 3. APPLY TO LOSS FUNCTION
+    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
     # Define the loss function
-    criterion = nn.CrossEntropyLoss(ignore_index=255)
+
+    # without class imbalance weighting (uncomment if you want to use this instead of the weighted version above)
+    # criterion = nn.CrossEntropyLoss(ignore_index=255)
+
+
+
+
     #-------------------UNET OPTIMIZER-------------------#
     # Use a standard learning rate for the whole model
     # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
