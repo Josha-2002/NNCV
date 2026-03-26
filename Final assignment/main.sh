@@ -7,7 +7,7 @@ python3 train.py \
     --lr 0.00001 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "segformer-b0-cityscape-512x1024-v6-Weighted"
+    --experiment-id "segformer-b0-cityscape-384x768-v6-Weighted"
 
 
 # wandb login
