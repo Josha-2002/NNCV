@@ -256,26 +256,49 @@ def main(args):
 
     # 2. DEFINE THE WEIGHTS
     # The order of this list exactly matches Train IDs 0 through 18!
+    # class_weights = torch.tensor([
+    #     0.5, # 0: road          (Suppress)
+    #     0.8, # 1: sidewalk      (Suppress)
+    #     0.5, # 2: building      (Suppress)
+    #     1.0, # 3: wall
+    #     1.2, # 4: fence
+    #     1.2, # 5: pole
+    #     1.5, # 6: traffic light (Boost)
+    #     1.5, # 7: traffic sign  (Boost)
+    #     0.5, # 8: vegetation    (Suppress)
+    #     1.0, # 9: terrain
+    #     0.5, # 10: sky          (Suppress)
+    #     3.0, # 11: person       (SUPER BOOST)
+    #     3.0, # 12: rider        (SUPER BOOST)
+    #     1.2, # 13: car          (Boost)
+    #     2.0, # 14: truck        (Boost)
+    #     2.0, # 15: bus          (Boost)
+    #     2.0, # 16: train        (Boost)
+    #     3.0, # 17: motorcycle   (SUPER BOOST)
+    #     3.0  # 18: bicycle      (SUPER BOOST)
+    # ]).to(device)
+
+    #New "gentle" version of class weights to avoid overfitting while still addressing class imbalance 
     class_weights = torch.tensor([
-        0.5, # 0: road          (Suppress)
-        0.8, # 1: sidewalk      (Suppress)
-        0.5, # 2: building      (Suppress)
+        0.8, # 0: road          (Gentle Suppress)
+        0.9, # 1: sidewalk      
+        0.8, # 2: building      (Gentle Suppress)
         1.0, # 3: wall
-        1.2, # 4: fence
-        1.2, # 5: pole
-        1.5, # 6: traffic light (Boost)
-        1.5, # 7: traffic sign  (Boost)
-        0.5, # 8: vegetation    (Suppress)
+        1.0, # 4: fence
+        1.0, # 5: pole
+        1.2, # 6: traffic light 
+        1.2, # 7: traffic sign  
+        0.8, # 8: vegetation    (Gentle Suppress)
         1.0, # 9: terrain
-        0.5, # 10: sky          (Suppress)
-        3.0, # 11: person       (SUPER BOOST)
-        3.0, # 12: rider        (SUPER BOOST)
-        1.2, # 13: car          (Boost)
-        2.0, # 14: truck        (Boost)
-        2.0, # 15: bus          (Boost)
-        2.0, # 16: train        (Boost)
-        3.0, # 17: motorcycle   (SUPER BOOST)
-        3.0  # 18: bicycle      (SUPER BOOST)
+        0.8, # 10: sky          (Gentle Suppress)
+        1.5, # 11: person       (Gentle Boost)
+        1.5, # 12: rider        (Gentle Boost)
+        1.0, # 13: car          
+        1.2, # 14: truck        
+        1.2, # 15: bus          
+        1.2, # 16: train        
+        1.5, # 17: motorcycle   (Gentle Boost)
+        1.5  # 18: bicycle      (Gentle Boost)
     ]).to(device)
 
     # 3. APPLY TO LOSS FUNCTION
