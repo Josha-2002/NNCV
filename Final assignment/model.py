@@ -15,24 +15,24 @@ class Model(nn.Module):
         #--------------SegFormer-specific code (uncomment if using SegFormer)--------------#
         # # Check if the local folder exists (in the Docker container)
         # # If it does, use it! If not (like on your PC), download it.
-        # pretrained_path = "/app/mit-b0" if os.path.exists("/app/mit-b0") else "nvidia/mit-b0"
-        
-        # self.segformer = SegformerForSemanticSegmentation.from_pretrained(
-        #     pretrained_path, 
-        #     num_labels=n_classes,
-        #     ignore_mismatched_sizes=True
-        # )
-        #--------------SegFormer-specific code (uncomment if using SegFormer)--------------#
-
-        #--------------SegFormer-specific code for Cityscapes (uncomment if using SegFormer)--------------#
-        # Ensure we are grabbing the fully fine-tuned Cityscapes model!
-        pretrained_path = "/app/segformer-b0-cityscapes" if os.path.exists("/app/segformer-b0-cityscapes") else "nvidia/segformer-b0-finetuned-cityscapes-1024-1024"
+        pretrained_path = "/app/mit-b0" if os.path.exists("/app/mit-b0") else "nvidia/mit-b0"
         
         self.segformer = SegformerForSemanticSegmentation.from_pretrained(
             pretrained_path, 
-            # We don't need ignore_mismatched_sizes=True anymore because it already has 19 classes!
+            num_labels=n_classes,
+            ignore_mismatched_sizes=True
         )
-        #--------------SegFormer-specific code for Cityscapes (uncomment if using SegFormer)--------------#
+        # --------------SegFormer-specific code (uncomment if using SegFormer)--------------#
+
+        # #--------------SegFormer-specific code for Cityscapes (uncomment if using SegFormer)--------------#
+        # # Ensure we are grabbing the fully fine-tuned Cityscapes model!
+        # pretrained_path = "/app/segformer-b0-cityscapes" if os.path.exists("/app/segformer-b0-cityscapes") else "nvidia/segformer-b0-finetuned-cityscapes-1024-1024"
+        
+        # self.segformer = SegformerForSemanticSegmentation.from_pretrained(
+        #     pretrained_path, 
+        #     # We don't need ignore_mismatched_sizes=True anymore because it already has 19 classes!
+        # )
+        # #--------------SegFormer-specific code for Cityscapes (uncomment if using SegFormer)--------------#
 
         # Differential Learning Rates
         # FREEZE THE BACKBONE to speed up training (Transfer Learning)
