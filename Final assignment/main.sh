@@ -2,12 +2,12 @@ wandb login
 
 python3 train.py \
     --data-dir ./data/cityscapes \
-    --batch-size 8 \
-    --epochs 50 \
+    --batch-size 16 \
+    --epochs 10 \
     --lr 0.00006 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "segformer-b0-384x768-v8-WEIGHTED-FOCAL-LOSS"
+    --experiment-id "segformer-b1-256x512-Cityscapes-UNWEIGHTED"
 
 
 # wandb login
