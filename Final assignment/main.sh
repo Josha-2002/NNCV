@@ -7,7 +7,7 @@ python3 train.py \
     --lr 0.00006 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "segformer-b0-384x768-v7-WEIGHTED"
+    --experiment-id "segformer-b0-384x768-v8-WEIGHTED-FOCAL-LOSS"
 
 
 # wandb login

@@ -22,6 +22,7 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from torchvision.datasets import Cityscapes
 from torchvision.utils import make_grid
+import torch.nn.functional as F
 from torchvision.transforms.v2 import (
     Compose,
     Normalize,
@@ -54,6 +55,38 @@ def convert_train_id_to_color(prediction: torch.Tensor) -> torch.Tensor:
             color_image[:, i][mask] = color[i]
 
     return color_image
+
+#---------------------Custom Weighted Focal Loss Class (uncomment if you want to use this instead of standard CrossEntropyLoss)---#
+# 1. Add this custom class anywhere near the top of train.py
+class WeightedFocalLoss(nn.Module):
+    def __init__(self, weight=None, gamma=2.0, ignore_index=255):
+        super().__init__()
+        # We use standard Cross Entropy, but set reduction='none' so we get the loss for EVERY pixel individually
+        self.ce = nn.CrossEntropyLoss(weight=weight, ignore_index=ignore_index, reduction='none')
+        self.gamma = gamma
+        self.ignore_index = ignore_index
+
+    def forward(self, inputs, targets):
+        # inputs: predictions from model
+        # targets: ground truth masks
+        ce_loss = self.ce(inputs, targets) 
+        
+        # Calculate pt (the probability the model assigned to the correct class)
+        pt = torch.exp(-ce_loss) 
+        
+        # Focal Loss Formula: (1 - pt)^gamma * CrossEntropyLoss
+        # If model is confident (pt=0.99), (1-0.99)^2 is almost 0. (Easy pixels ignored!)
+        # If model is confused (pt=0.10), (1-0.10)^2 is 0.81. (Hard pixels penalized!)
+        focal_loss = ((1 - pt) ** self.gamma) * ce_loss
+        
+        # Filter out the ignore_index (255) pixels
+        valid_mask = (targets != self.ignore_index)
+        return focal_loss[valid_mask].mean()
+#---------------------Custom Weighted Focal Loss Class (uncomment if you want to use this instead of standard CrossEntropyLoss)---#
+
+
+
+
 
 ###################################################
 
@@ -302,7 +335,16 @@ def main(args):
     # ]).to(device)
 
     # 3. APPLY TO LOSS FUNCTION
-    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
+
+    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    # criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
+    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+
+    #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
+    criterion = WeightedFocalLoss(weight=class_weights, gamma=2.0, ignore_index=255)
+    #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
+
+    
     # Define the loss function
 
     # without class imbalance weighting (uncomment if you want to use this instead of the weighted version above)
