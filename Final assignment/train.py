@@ -56,8 +56,6 @@ def convert_train_id_to_color(prediction: torch.Tensor) -> torch.Tensor:
 
     return color_image
 
-#---------------------Custom Weighted Focal Loss Class (uncomment if you want to use this instead of standard CrossEntropyLoss)---#
-# 1. Add this custom class anywhere near the top of train.py
 class WeightedFocalLoss(nn.Module):
     def __init__(self, weight=None, gamma=2.0, ignore_index=255):
         super().__init__()
@@ -82,58 +80,7 @@ class WeightedFocalLoss(nn.Module):
         # Filter out the ignore_index (255) pixels
         valid_mask = (targets != self.ignore_index)
         return focal_loss[valid_mask].mean()
-#---------------------Custom Weighted Focal Loss Class (uncomment if you want to use this instead of standard CrossEntropyLoss)---#
 
-
-
-
-
-###################################################
-
-#Metric class to compute IoU and Dice Coefficient for semantic segmentation
-#only  computes the IoU and Dice for classes that actually appear in the targets to avoid skewing metrics with classes that are never present in the validation set (e.g., "train" or "motorcycle" in Cityscapes' val split)
-# class SegmentationMetrics:
-#     def __init__(self, num_classes=19, ignore_index=255):
-#         self.num_classes = num_classes
-#         self.ignore_index = ignore_index
-#         self.total_intersections = torch.zeros(num_classes)
-#         self.total_unions = torch.zeros(num_classes)
-#         self.total_targets = torch.zeros(num_classes)
-#         self.total_preds = torch.zeros(num_classes)
-
-#     def update(self, preds, target):
-#         preds = preds.contiguous().view(-1)
-#         target = target.contiguous().view(-1)
-        
-#         mask = (target != self.ignore_index)
-#         preds = preds[mask]
-#         target = target[mask]
-        
-#         for cls in range(self.num_classes):
-#             pred_inds = (preds == cls)
-#             target_inds = (target == cls)
-            
-#             intersection = (pred_inds & target_inds).sum()
-#             union = pred_inds.sum() + target_inds.sum() - intersection
-            
-#             self.total_intersections[cls] += intersection.cpu()
-#             self.total_unions[cls] += union.cpu()
-#             self.total_targets[cls] += target_inds.sum().cpu()
-#             self.total_preds[cls] += pred_inds.sum().cpu()
-
-#     def compute(self):
-#         # Only compute for classes that actually appeared in the targets
-#         valid_classes = self.total_targets > 0
-        
-#         ious = self.total_intersections[valid_classes] / torch.clamp(self.total_unions[valid_classes], min=1)
-#         dices = (2.0 * self.total_intersections[valid_classes]) / torch.clamp(self.total_targets[valid_classes] + self.total_preds[valid_classes], min=1)
-        
-#         return ious.mean().item(), dices.mean().item()
-###################################################
-
-
-
-#---------------------New  SegmentationMetrics class with super-category metrics (uncomment if you want to use this instead of the simpler version above)---------------------# 
 class SegmentationMetrics:
     def __init__(self, num_classes=19, ignore_index=255):
         self.num_classes = num_classes
@@ -191,9 +138,6 @@ class SegmentationMetrics:
         vehicle_iou, vehicle_dice = self._get_category_metrics([13, 14, 15, 16, 17, 18])
         
         return mean_iou, mean_dice, human_iou, human_dice, vehicle_iou, vehicle_dice
-#_---------------------New with different small categories (uncomment if you want to use these instead of the human/vehicle split)---------------------#
-
-
 
 def get_args_parser():
 
@@ -336,19 +280,19 @@ def main(args):
 
     # 3. APPLY TO LOSS FUNCTION
 
-    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
-    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
-    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    # criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
+    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
 
     #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
     # criterion = WeightedFocalLoss(weight=class_weights, gamma=2.0, ignore_index=255)
     #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
 
-    
-    # Define the loss function
+    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
+    criterion = nn.CrossEntropyLoss(ignore_index=255)
+    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
 
-    # without class imbalance weighting (uncomment if you want to use this instead of the weighted version above)
-    # criterion = nn.CrossEntropyLoss(ignore_index=255)
+
 
 
 
@@ -358,20 +302,20 @@ def main(args):
     # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     #-------------------UNET OPTIMIZER-------------------#
 
-    # -------------------SEGFORMER OPTIMIZER-------------------#
-    # --- SEGFORMER OPTIMIZER (Commented out for now) ---
-    backbone_params = model.segformer.segformer.parameters()
-    head_params = model.segformer.decode_head.parameters()
-    optimizer = torch.optim.AdamW([
-        {'params': backbone_params, 'lr': args.lr * 0.01}, 
-        {'params': head_params, 'lr': args.lr}            
-    ])
-    # -------------------SEGFORMER OPTIMIZER CITYSCAPES-------------------#
+    # # -------------------SEGFORMER OPTIMIZER-------------------#
+    # # --- SEGFORMER OPTIMIZER (Commented out for now) ---
+    # backbone_params = model.segformer.segformer.parameters()
+    # head_params = model.segformer.decode_head.parameters()
+    # optimizer = torch.optim.AdamW([
+    #     {'params': backbone_params, 'lr': args.lr * 0.01}, 
+    #     {'params': head_params, 'lr': args.lr}            
+    # ])
+    # # -------------------SEGFORMER OPTIMIZER CITYSCAPES-------------------#
 
-    # #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
-    # # 1. Use a standard optimizer for the whole model
-    # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-    # #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
+    #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
+    # 1. Use a standard optimizer for the whole model
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
 
     # Training loop
     best_valid_loss = float('inf')
