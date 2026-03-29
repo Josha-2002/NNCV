@@ -289,27 +289,27 @@ def main(args):
 
     # 2. DEFINE THE WEIGHTS
     # The order of this list exactly matches Train IDs 0 through 18!
-    # class_weights = torch.tensor([
-    #     0.5, # 0: road          (Suppress)
-    #     0.8, # 1: sidewalk      (Suppress)
-    #     0.5, # 2: building      (Suppress)
-    #     1.0, # 3: wall
-    #     1.2, # 4: fence
-    #     1.2, # 5: pole
-    #     1.5, # 6: traffic light (Boost)
-    #     1.5, # 7: traffic sign  (Boost)
-    #     0.5, # 8: vegetation    (Suppress)
-    #     1.0, # 9: terrain
-    #     0.5, # 10: sky          (Suppress)
-    #     3.0, # 11: person       (SUPER BOOST)
-    #     3.0, # 12: rider        (SUPER BOOST)
-    #     1.2, # 13: car          (Boost)
-    #     2.0, # 14: truck        (Boost)
-    #     2.0, # 15: bus          (Boost)
-    #     2.0, # 16: train        (Boost)
-    #     3.0, # 17: motorcycle   (SUPER BOOST)
-    #     3.0  # 18: bicycle      (SUPER BOOST)
-    # ]).to(device)
+    class_weights = torch.tensor([
+        0.5, # 0: road          (Suppress)
+        0.8, # 1: sidewalk      (Suppress)
+        0.5, # 2: building      (Suppress)
+        1.0, # 3: wall
+        1.2, # 4: fence
+        1.2, # 5: pole
+        1.5, # 6: traffic light (Boost)
+        1.5, # 7: traffic sign  (Boost)
+        0.5, # 8: vegetation    (Suppress)
+        1.0, # 9: terrain
+        0.5, # 10: sky          (Suppress)
+        3.0, # 11: person       (SUPER BOOST)
+        3.0, # 12: rider        (SUPER BOOST)
+        1.2, # 13: car          (Boost)
+        2.0, # 14: truck        (Boost)
+        2.0, # 15: bus          (Boost)
+        2.0, # 16: train        (Boost)
+        3.0, # 17: motorcycle   (SUPER BOOST)
+        3.0  # 18: bicycle      (SUPER BOOST)
+    ]).to(device)
 
     # #New "gentle" version of class weights to avoid overfitting while still addressing class imbalance 
     # class_weights = torch.tensor([
@@ -336,9 +336,9 @@ def main(args):
 
     # 3. APPLY TO LOSS FUNCTION
 
-    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
-    # criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
-    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
+    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
 
     #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
     # criterion = WeightedFocalLoss(weight=class_weights, gamma=2.0, ignore_index=255)
@@ -348,7 +348,7 @@ def main(args):
     # Define the loss function
 
     # without class imbalance weighting (uncomment if you want to use this instead of the weighted version above)
-    criterion = nn.CrossEntropyLoss(ignore_index=255)
+    # criterion = nn.CrossEntropyLoss(ignore_index=255)
 
 
 
@@ -358,20 +358,20 @@ def main(args):
     # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     #-------------------UNET OPTIMIZER-------------------#
 
-    # # -------------------SEGFORMER OPTIMIZER-------------------#
-    # # --- SEGFORMER OPTIMIZER (Commented out for now) ---
-    # backbone_params = model.segformer.segformer.parameters()
-    # head_params = model.segformer.decode_head.parameters()
-    # optimizer = torch.optim.AdamW([
-    #     {'params': backbone_params, 'lr': args.lr * 0.01}, 
-    #     {'params': head_params, 'lr': args.lr}            
-    # ])
-    # # -------------------SEGFORMER OPTIMIZER-------------------#
+    # -------------------SEGFORMER OPTIMIZER-------------------#
+    # --- SEGFORMER OPTIMIZER (Commented out for now) ---
+    backbone_params = model.segformer.segformer.parameters()
+    head_params = model.segformer.decode_head.parameters()
+    optimizer = torch.optim.AdamW([
+        {'params': backbone_params, 'lr': args.lr * 0.01}, 
+        {'params': head_params, 'lr': args.lr}            
+    ])
+    # -------------------SEGFORMER OPTIMIZER CITYSCAPES-------------------#
 
-    #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
-    # 1. Use a standard optimizer for the whole model
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-    #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
+    # #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
+    # # 1. Use a standard optimizer for the whole model
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    # #----------SegFormer-specific note on optimizers (uncomment if using SegFormer)----------#
 
     # Training loop
     best_valid_loss = float('inf')

@@ -3,11 +3,11 @@ wandb login
 python3 train.py \
     --data-dir ./data/cityscapes \
     --batch-size 16 \
-    --epochs 10 \
+    --epochs 100 \
     --lr 0.00006 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "segformer-b1-256x512-Cityscapes-UNWEIGHTED"
+    --experiment-id "segformer-b1-256x512-WEIGHTED"
 
 
 # wandb login
