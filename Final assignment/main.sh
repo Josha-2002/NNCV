@@ -2,29 +2,27 @@ wandb login
 
 python3 train.py \
     --data-dir ./data/cityscapes \
-    --batch-size 64 \
-    --epochs 100 \
-    --lr 0.001 \
+    --batch-size 8 \
+    --epochs 50 \
+    --lr 0.00006 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "unet-BASELINE-UnWeighted" \
+    --experiment-id "segformer-b0-384x768-UnWeighted"
 
 
 
-
-
+#---------------UNET - Baseline ----------------
 # wandb login
 
 # python3 train.py \
 #     --data-dir ./data/cityscapes \
-#     --batch-size 8 \
-#     --epochs 50 \
-#     --lr 0.00006 \
+#     --batch-size 64 \
+#     --epochs 100 \
+#     --lr 0.001 \
 #     --num-workers 10 \
 #     --seed 42 \
-#     --experiment-id "segformer-b1-256x512-UnWeighted"
-
-
+#     --experiment-id "unet-BASELINE-UnWeighted" \
+#_--------------UNET - Baseline ----------------
 
 
 

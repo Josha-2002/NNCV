@@ -297,20 +297,20 @@ def main(args):
 
 
 
-    # -------------------UNET OPTIMIZER-------------------#
-    # Use a standard learning rate for the whole model
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-    # -------------------UNET OPTIMIZER-------------------#
+    # # -------------------UNET OPTIMIZER-------------------#
+    # # Use a standard learning rate for the whole model
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    # # -------------------UNET OPTIMIZER-------------------#
 
-    # # -------------------SEGFORMER OPTIMIZER-------------------#
-    # # --- SEGFORMER OPTIMIZER (Commented out for now) ---
-    # backbone_params = model.segformer.segformer.parameters()
-    # head_params = model.segformer.decode_head.parameters()
-    # optimizer = torch.optim.AdamW([
-    #     {'params': backbone_params, 'lr': args.lr * 0.01}, 
-    #     {'params': head_params, 'lr': args.lr}            
-    # ])
-    # # -------------------SEGFORMER OPTIMIZER-------------------#
+    # -------------------SEGFORMER OPTIMIZER-------------------#
+    # --- SEGFORMER OPTIMIZER (Commented out for now) ---
+    backbone_params = model.segformer.segformer.parameters()
+    head_params = model.segformer.decode_head.parameters()
+    optimizer = torch.optim.AdamW([
+        {'params': backbone_params, 'lr': args.lr * 0.01}, 
+        {'params': head_params, 'lr': args.lr}            
+    ])
+    # -------------------SEGFORMER OPTIMIZER-------------------#
 
     # #----------SEGFORMER OPTIMIZER CITYSCAPES----------#
     # # Filter out the frozen backbone parameters so the optimizer only sees the head!
