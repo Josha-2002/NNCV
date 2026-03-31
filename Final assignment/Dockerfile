@@ -57,10 +57,10 @@ RUN pip install --no-cache-dir \
 
 # ==========================================
 # BULLETPROOF OFFLINE METHOD: 
-# Download the model and save it locally to /app/mit-b1
-RUN mkdir -p /app/mit-b1
-RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b1'); model.save_pretrained('/app/mit-b1')"
-RUN chmod -R 777 /app/mit-b1
+# Download the model and save it locally to /app/mit-b0
+RUN mkdir -p /app/mit-b0
+RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b0'); model.save_pretrained('/app/mit-b0')"
+RUN chmod -R 777 /app/mit-b0
 # ==========================================
 
 # #  #=========================================
