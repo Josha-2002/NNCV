@@ -34,37 +34,20 @@ MODEL_PATH = "/app/model.pt"
 
 #can be customized
 def preprocess(img: Image.Image) -> torch.Tensor:
-    # Ensure image is RGB
-    img = img.convert("RGB")
-    
     # SegFormer/ImageNet standard normalization
     transform = Compose([
         ToImage(),
         # Resize(size=(256, 512), interpolation=InterpolationMode.BILINEAR), # <--- CHANGED!
         Resize(IMG_SIZE, interpolation=InterpolationMode.BILINEAR), # <--- ORIGINAL SIZE! Adjust this if you changed the image resize above.
         ToDtype(dtype=torch.float32, scale=True),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), #For segformer, used ImageNet normalization. 
+        # Normalize(mean=(0.5,), std=(0.5,)), # For U-Net, used simple normalization to [0,1]. Adjust this if you changed the normalization above.
     ])
 
     img = transform(img)
     img = img.unsqueeze(0)  # Add batch dimension
     return img
 
-
-# def preprocess(img: Image.Image) -> torch.Tensor:
-#     # Implement your preprocessing steps here
-#     # For example, resizing, normalization, etc.
-#     # Return a tensor suitable for model input
-#     transform = Compose([
-#         ToImage(),
-#         Resize(size=(256, 256), interpolation=InterpolationMode.BILINEAR),
-#         ToDtype(dtype=torch.float32, scale=True),
-#         Normalize(mean=(0.5,), std=(0.5,)),
-#     ])
-
-#     img = transform(img)
-#     img = img.unsqueeze(0)  # Add batch dimension
-#     return img
 
 #can be customized
 def postprocess(pred: torch.Tensor, original_shape: tuple) -> np.ndarray:
@@ -79,20 +62,6 @@ def postprocess(pred: torch.Tensor, original_shape: tuple) -> np.ndarray:
     prediction_numpy = prediction_numpy.squeeze()  # Remove batch and channel dimensions if necessary
 
     return prediction_numpy
-
-# def postprocess(pred: torch.Tensor, original_shape: tuple) -> np.ndarray:
-#     # Implement your postprocessing steps here
-#     # For example, resizing back to original shape, converting to color mask, etc.
-#     # Return a numpy array suitable for saving as an image
-#     pred_soft = nn.Softmax(dim=1)(pred)
-#     pred_max = torch.argmax(pred_soft, dim=1, keepdim=True)  # Get the class with the highest probability
-#     prediction = Resize(size=original_shape, interpolation=InterpolationMode.NEAREST)(pred_max)
-
-#     prediction_numpy = prediction.cpu().detach().numpy()
-#     prediction_numpy = prediction_numpy.squeeze()  # Remove batch and channel dimensions if necessary
-
-#     return prediction_numpy
-
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -124,8 +93,6 @@ def main():
 
 
 
-
-    
 
     image_files = list(Path(IMAGE_DIR).glob("*.png"))  # DO NOT CHANGE, IMAGES WILL BE PROVIDED IN THIS FORMAT
     print(f"Found {len(image_files)} images to process.")

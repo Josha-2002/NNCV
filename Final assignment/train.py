@@ -184,6 +184,7 @@ def main(args):
         # Resize((256, 512)), # <--- CHANGED! ratio is now 1:2 to better match Cityscapes' original aspect ratio
         ToDtype(torch.float32, scale=True),
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        # Normalize(mean=(0.5,), std=(0.5,)),
     ])
 
     # Target transform (mask)
@@ -280,17 +281,17 @@ def main(args):
 
     # 3. APPLY TO LOSS FUNCTION
 
-    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
-    # criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
-    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
+    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
 
     # #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
     # criterion = WeightedFocalLoss(weight=class_weights, gamma=2.0, ignore_index=255)
     # #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
 
-    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
-    criterion = nn.CrossEntropyLoss(ignore_index=255)
-    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
+    # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
+    # criterion = nn.CrossEntropyLoss(ignore_index=255)
+    # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
 
 
 

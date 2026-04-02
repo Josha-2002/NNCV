@@ -4,5 +4,7 @@ HEIGHT = 384
 WIDTH = 768
 # HEIGHT = 256
 # WIDTH = 256
+# HEIGHT = 1024
+# WIDTH = 1024
 IMG_SIZE = (HEIGHT, WIDTH)
 print(f"Image size: {IMG_SIZE}")

@@ -55,16 +55,32 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
     pillow transformers
 
+# # ==========================================
+# # BULLETPROOF OFFLINE METHOD: 
+# # Download the model and save it locally to /app/mit-b0
+# RUN mkdir -p /app/mit-b0
+# RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b0'); model.save_pretrained('/app/mit-b0')"
+# RUN chmod -R 777 /app/mit-b0
+# # ==========================================
+
+
 # ==========================================
 # BULLETPROOF OFFLINE METHOD: 
-# Download the model and save it locally to /app/mit-b0
-RUN mkdir -p /app/mit-b0
-RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b0'); model.save_pretrained('/app/mit-b0')"
-RUN chmod -R 777 /app/mit-b0
+# Download the model and save it locally to /app/mit-b1
+RUN mkdir -p /app/mit-b1
+RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b1'); model.save_pretrained('/app/mit-b1')"
+RUN chmod -R 777 /app/mit-b1
 # ==========================================
 
 # #  #=========================================
 # # Download the FULLY trained model on Cityscapes and save it locally to /app/segformer-b0-cityscapes
+# RUN mkdir -p /app/segformer-b0-cityscapes
+# RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b0-finetuned-cityscapes-1024-1024'); model.save_pretrained('/app/segformer-b0-cityscapes')"
+# RUN chmod -R 777 /app/segformer-b0-cityscapes
+# # #=========================================
+
+# #  #=========================================
+# # Download the FULLY trained model on Cityscapes and save it locally to /app/segformer-b1-cityscapes
 # RUN mkdir -p /app/segformer-b1-cityscapes
 # RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b1-finetuned-cityscapes-1024-1024'); model.save_pretrained('/app/segformer-b1-cityscapes')"
 # RUN chmod -R 777 /app/segformer-b1-cityscapes
@@ -74,5 +90,6 @@ WORKDIR /app
 COPY predict.py /app/predict.py
 COPY model.py /app/model.py
 COPY model.pt /app/model.pt
+COPY config.py /app/config.py
 
 ENTRYPOINT ["python", "/app/predict.py"]
