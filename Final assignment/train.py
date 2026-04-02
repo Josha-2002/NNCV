@@ -33,7 +33,7 @@ from torchvision.transforms.v2 import (
 )
 
 from model import Model
-from config import IMG_SIZE
+from config import IMG_SIZE, INIT_WEIGHTS
 
 # Mapping class IDs to train IDs
 id_to_trainid = {cls.id: cls.train_id for cls in Cityscapes.classes}
@@ -271,30 +271,29 @@ def main(args):
     # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
 
 
-
-
-
+   
+    # ------------------- DYNAMIC OPTIMIZER SELECTION -------------------#
+    if INIT_WEIGHTS == "cityscapes":
+        # Strategy 1: Filtered Optimizer (Only train the head)
+        print("Optimizer selected: Filtered AdamW (Training Classification Head only)")
+        trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+        optimizer = torch.optim.AdamW(trainable_params, lr=args.lr)
+        
+    elif INIT_WEIGHTS == "blank":
+        # Strategy 2: Differential Optimizer (Train head fast, backbone slow)
+        print("Optimizer selected: Differential AdamW (Protecting ImageNet Backbone)")
+        backbone_params = model.segformer.segformer.parameters()
+        head_params = model.segformer.decode_head.parameters()
+        optimizer = torch.optim.AdamW([
+            {'params': backbone_params, 'lr': args.lr * 0.01}, 
+            {'params': head_params, 'lr': args.lr}            
+        ])
+    # -------------------------------------------------------------------#
 
     # # -------------------UNET OPTIMIZER-------------------#
     # # Use a standard learning rate for the whole model
     # optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     # # -------------------UNET OPTIMIZER-------------------#
-
-    # -------------------SEGFORMER OPTIMIZER-------------------#
-    # --- SEGFORMER OPTIMIZER (Commented out for now) ---
-    backbone_params = model.segformer.segformer.parameters()
-    head_params = model.segformer.decode_head.parameters()
-    optimizer = torch.optim.AdamW([
-        {'params': backbone_params, 'lr': args.lr * 0.01}, 
-        {'params': head_params, 'lr': args.lr}            
-    ])
-    # -------------------SEGFORMER OPTIMIZER-------------------#
-
-    # #----------SEGFORMER OPTIMIZER CITYSCAPES----------#
-    # # Filter out the frozen backbone parameters so the optimizer only sees the head!
-    # trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    # optimizer = torch.optim.AdamW(trainable_params, lr=args.lr)
-    # #----------SEGFORMER OPTIMIZER CITYSCAPES----------#
 
     # Training loop
     best_valid_loss = float('inf')

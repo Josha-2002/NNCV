@@ -20,29 +20,14 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
     pillow transformers
 
-# # ============= - Segformer mit-B0 - =============================
-# RUN mkdir -p /app/mit-b0
-# RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b0'); model.save_pretrained('/app/mit-b0')"
-# RUN chmod -R 777 /app/mit-b0
-# # ============= - Segformer mit-B0 - =============================
-
-# ============= - Segformer mit-B1 - =============================
-RUN mkdir -p /app/mit-b1
-RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b1'); model.save_pretrained('/app/mit-b1')"
-RUN chmod -R 777 /app/mit-b1
-# ============= - Segformer mit-B1 - =============================
-
-# # ============= - Segformer cityscapes B0 - ======================
-# RUN mkdir -p /app/segformer-b0-cityscapes
-# RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b0-finetuned-cityscapes-1024-1024'); model.save_pretrained('/app/segformer-b0-cityscapes')"
-# RUN chmod -R 777 /app/segformer-b0-cityscapes
-# # ============= - Segformer cityscapes B0 - ======================
-
-# # ============= - Segformer cityscapes B1 - ======================
-# RUN mkdir -p /app/segformer-b1-cityscapes
-# RUN python3 -c "from transformers import SegformerForSemanticSegmentation; model = SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b1-finetuned-cityscapes-1024-1024'); model.save_pretrained('/app/segformer-b1-cityscapes')"
-# RUN chmod -R 777 /app/segformer-b1-cityscapes
-# # ============= - Segformer cityscapes B1 - ======================
+# =====================================================================
+# Download ALL models during build so config.py can switch instantly offline!
+# =====================================================================
+RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b0').save_pretrained('/app/mit-b0')"
+RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b1').save_pretrained('/app/mit-b1')"
+RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b0-finetuned-cityscapes-1024-1024').save_pretrained('/app/segformer-b0-cityscapes')"
+RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b1-finetuned-cityscapes-1024-1024').save_pretrained('/app/segformer-b1-cityscapes')"
+# =====================================================================
 
 WORKDIR /app
 COPY predict.py /app/predict.py
