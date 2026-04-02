@@ -54,10 +54,10 @@ class Model(nn.Module):
         # #--------------SegFormer-specific code for Cityscapes (uncomment if using SegFormer)--------------#
 
 
-        # Differential Learning Rates
-        # FREEZE THE BACKBONE to speed up training (Transfer Learning)
-        for param in self.segformer.segformer.parameters():
-            param.requires_grad = False
+        # # Differential Learning Rates
+        # # FREEZE THE BACKBONE to speed up training (Transfer Learning)
+        # for param in self.segformer.segformer.parameters():
+        #     param.requires_grad = False
 
 
 
