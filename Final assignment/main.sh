@@ -7,7 +7,7 @@ python3 train.py \
     --lr 0.00006 \
     --num-workers 10 \
     --seed 42 \
-    --experiment-id "segformer-b0-384x768-Weighted-END"
+    --experiment-id "segformer-b2-256x512-Cityscapes-UnWeighted"
 
 
 

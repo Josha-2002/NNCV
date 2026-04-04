@@ -258,17 +258,17 @@ def main(args):
 
     # 3. APPLY TO LOSS FUNCTION
 
-    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
-    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
-    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    # criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
+    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
 
     # #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
     # criterion = WeightedFocalLoss(weight=class_weights, gamma=2.0, ignore_index=255)
     # #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
 
-    # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
-    # criterion = nn.CrossEntropyLoss(ignore_index=255)
-    # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
+    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
+    criterion = nn.CrossEntropyLoss(ignore_index=255)
+    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
 
 
    
