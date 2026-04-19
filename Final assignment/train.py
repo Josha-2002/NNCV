@@ -148,7 +148,7 @@ def get_args_parser():
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     parser.add_argument("--num-workers", type=int, default=10, help="Number of workers for data loaders")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
-    parser.add_argument("--experiment-id", type=str, default="unet-training", help="Experiment ID for Weights & Biases")
+    parser.add_argument("--experiment-id", type=str, default="segformer-training", help="Experiment ID for Weights & Biases")
 
 # NEW: Flag to easily turn off W&B for local testing
     parser.add_argument("--disable-wandb", action="store_true", help="Disable Weights & Biases logging")
@@ -258,17 +258,17 @@ def main(args):
 
     # 3. APPLY TO LOSS FUNCTION
 
-    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
-    # criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
-    # #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
+    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
+    #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
 
     # #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
     # criterion = WeightedFocalLoss(weight=class_weights, gamma=2.0, ignore_index=255)
     # #--------------------CUSTOM WEIGHTED FOCAL LOSS-------------------#
 
-    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
-    criterion = nn.CrossEntropyLoss(ignore_index=255)
-    #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
+    # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
+    # criterion = nn.CrossEntropyLoss(ignore_index=255)
+    # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
 
 
    

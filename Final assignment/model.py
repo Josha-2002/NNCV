@@ -1,7 +1,11 @@
 import os
+import sys
 import torch
 import torch.nn as nn
 from transformers import SegformerForSemanticSegmentation
+
+# FORCE Python to check the /app directory so the Efficiency server doesn't crash
+sys.path.append('/app')
 from config import MODEL_SIZE, INIT_WEIGHTS  # Import the Central Brain!
 
 class Model(nn.Module):

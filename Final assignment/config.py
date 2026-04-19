@@ -40,18 +40,18 @@ All models are evaluated using standard FP32 (32-bit floating point) precision.
 # --- 1. RESOLUTION SETTINGS ---
 # Set to (256, 512) for Efficiency Track submissions
 # Set to (384, 768) for Peak Performance / Real-time Urban testing
-HEIGHT = 256    
-WIDTH = 512     
+HEIGHT = 384   
+WIDTH = 768     
 IMG_SIZE = (HEIGHT, WIDTH)
 
 # --- 2. MODEL ARCHITECTURE ---
 # Options: "b0" (3.7M params, ultra-fast) or "b1" (13.7M params, high-capacity)
-MODEL_SIZE = "b2" 
+MODEL_SIZE = "b1" 
 
 # --- 3. TRAINING STRATEGY ---
 # Options: 
 # "cityscapes" -> Loads fully trained model. Freezes backbone. Uses filtered optimizer.
 # "blank"      -> Loads ImageNet pre-trained (mit). Unfreezes backbone. Uses differential optimizer.
-INIT_WEIGHTS = "cityscapes" 
+INIT_WEIGHTS = "blank" 
 
 print(f"Config Loaded: SegFormer-{MODEL_SIZE.upper()} (FP32) | Weights: {INIT_WEIGHTS} | Size: {IMG_SIZE}")
