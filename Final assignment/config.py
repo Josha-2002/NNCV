@@ -12,14 +12,12 @@ All models are evaluated using standard FP32 (32-bit floating point) precision.
 1. EFFICIENCY TRACK ("JK_HIGHWAY_SF_B0_Adaptive")
    - Objective: Maximize mathematical efficiency (MeanDice / TFLOPs) and inference speed.
    - Configuration:
-        HEIGHT = 256
-        WIDTH = 512
+        HEIGHT = 384
+        WIDTH = 768
         MODEL_SIZE = "b0"
         INIT_WEIGHTS = "cityscapes"
-   - Rationale: Using the highly compressed 256x512 resolution drastically reduces 
-     the pixel count, preventing PyTorch Profiler OOM (Out of Memory) errors on the 
-     competition's 12GB evaluation server. It minimizes GFLOPs while utilizing the 
-     smart 3.7M parameter B0 model, guaranteeing a top-tier efficiency score.
+   - Rationale: Using the compressed 384x768 resolution drastically reduces 
+     the pixel count, utilizing the 3.7M parameter B0 model.
 
 2. PEAK PERFORMANCE & PAPER FOCUS ("JK_URBAN_SF_B1_Adaptive")
    - Objective: Maximize overall accuracy and minority class safety (Humans/Vehicles) 
@@ -29,23 +27,22 @@ All models are evaluated using standard FP32 (32-bit floating point) precision.
         WIDTH = 768
         MODEL_SIZE = "b1"
         INIT_WEIGHTS = "cityscapes"
-   - Rationale: The B1 architecture (13.7M parameters) provides superior spatial 
+   - Rationale: The B1 architecture (13.7M parameters) provides spatial 
      understanding. At 384x768 FP32, inference operates at ~42.5 FPS, safely clearing 
      the 30 FPS real-time urban threshold. For the paper's custom safety model, the 
      backbone was frozen to prevent gradient shock, and the head was fine-tuned using 
      sharp class weights (3.0x for humans).
-======================================================================================
 """
 
 # --- 1. RESOLUTION SETTINGS ---
-# Set to (256, 512) for Efficiency Track submissions
+# Set to (384, 768) for Efficiency Track submissions
 # Set to (384, 768) for Peak Performance / Real-time Urban testing
 HEIGHT = 384   
 WIDTH = 768     
 IMG_SIZE = (HEIGHT, WIDTH)
 
 # --- 2. MODEL ARCHITECTURE ---
-# Options: "b0" (3.7M params, ultra-fast) or "b1" (13.7M params, high-capacity)
+# Options: "b0" (3.7M params) or "b1" (13.7M params)
 MODEL_SIZE = "b1" 
 
 # --- 3. TRAINING STRATEGY ---

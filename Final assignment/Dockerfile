@@ -20,14 +20,14 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
     pillow transformers
 
-# =====================================================================
+# ---------------------------------------------------------------------
 # Download ALL models during build so config.py can switch instantly offline!
-# =====================================================================
+# ---------------------------------------------------------------------
 RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b0').save_pretrained('/app/mit-b0')"
 RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/mit-b1').save_pretrained('/app/mit-b1')"
 RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b0-finetuned-cityscapes-1024-1024').save_pretrained('/app/segformer-b0-cityscapes')"
 RUN python3 -c "from transformers import SegformerForSemanticSegmentation; SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b1-finetuned-cityscapes-1024-1024').save_pretrained('/app/segformer-b1-cityscapes')"
-# =====================================================================
+# --------------------------------------------------------------------
 
 WORKDIR /app
 COPY predict.py /app/predict.py

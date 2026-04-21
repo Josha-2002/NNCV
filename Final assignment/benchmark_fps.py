@@ -1,16 +1,14 @@
 """
-benchmark_fps_minimal.py
-========================
 FPS benchmark for SegFormer semantic segmentation inference.
 
 SOURCES — every pattern in this file is traceable to one of:
   [1] PyTorch CUDA Semantics documentation
       https://docs.pytorch.org/docs/stable/notes/cuda.html
-      → CUDA Event timing pattern (lines marked SOURCE-1)
+      CUDA Event timing pattern (lines marked SOURCE-1)
 
   [2] PyTorch Benchmark tutorial
       https://docs.pytorch.org/tutorials/recipes/recipes/benchmark.html
-      → warm-up requirement, synchronization requirement (lines marked SOURCE-2)
+      warm-up requirement, synchronization requirement (lines marked SOURCE-2)
 """
 
 import os
@@ -24,12 +22,12 @@ from model import Model # SegFormer implementation; replace with your model if n
 # from model_Unet import Model # UNet alternative
 from config import IMG_SIZE
 
-# ── Settings ─────────────────────────────────────────────────────────────────
+# -- Settings ----------------------------------------------------------------
 WARMUP_RUNS = 50   # SOURCE-2: warm-up required before timing
 TIMING_RUNS = 500
 MODEL_PATH  = "model.pt"
 IMAGE_DIR   = "../local_data"
-# ─────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------------
 
 
 def main():
@@ -41,7 +39,7 @@ def main():
     print(f"IMG_SIZE  : {IMG_SIZE}")
     print()
 
-    # ── Load model────────────────────────────────
+    # -- Load model ------------------------------------------------
     model = Model(n_classes=19).to(device).eval()
     if os.path.exists(MODEL_PATH):
         state_dict = torch.load(MODEL_PATH, map_location=device, weights_only=False)
@@ -50,7 +48,7 @@ def main():
     else:
         print("Warning: no model.pt found, using random weights.")
 
-    # ── Load images ───────────────────────────────
+    # -- Load images ------------------------------------------------
     # ImageNet normalization matches predict.py
     transform = T.Compose([
         T.Resize(IMG_SIZE),
@@ -70,7 +68,7 @@ def main():
         print("Warning: no images found, using dummy tensor.")
     print()
 
-    # ── Warm-up (SOURCE-2) ───────────────────────────────────────────────────
+    # -- Warm-up (SOURCE-2) ----------------------------------------------------
     # PyTorch benchmark tutorial: warm-up is required so that CUDA kernel
     # JIT compilation and cuBLAS initialisation do not skew timing results.
     with torch.no_grad():
@@ -81,33 +79,25 @@ def main():
     if device == "cuda":
         torch.cuda.synchronize()
 
-    # ── Timed loop (SOURCE-1) ────────────────────────────────────────────────
-    # Pattern taken directly from PyTorch CUDA semantics docs:
-    #   start_event = torch.cuda.Event(enable_timing=True)
-    #   end_event   = torch.cuda.Event(enable_timing=True)
-    #   start_event.record()
-    #   # ... work ...
-    #   end_event.record()
-    #   torch.cuda.synchronize()
-    #   elapsed_ms = start_event.elapsed_time(end_event)
+    # -- Timed loop (SOURCE-1) ----------------------------------------------
     latencies_ms = []
     with torch.no_grad():
         for i in range(TIMING_RUNS):
             if device == "cuda":
                 start_event = torch.cuda.Event(enable_timing=True)
                 end_event   = torch.cuda.Event(enable_timing=True)
-                torch.cuda.synchronize()          # SOURCE-1: sync before start
-                start_event.record()              # SOURCE-1
+                torch.cuda.synchronize()          # sync before start
+                start_event.record()              
                 _ = model(images[i % len(images)])
-                end_event.record()                # SOURCE-1
-                torch.cuda.synchronize()          # SOURCE-1: wait for GPU
-                latencies_ms.append(start_event.elapsed_time(end_event))  # SOURCE-1
+                end_event.record()                
+                torch.cuda.synchronize()          # wait for GPU
+                latencies_ms.append(start_event.elapsed_time(end_event)) 
             else:
                 t0 = time.perf_counter()
                 _ = model(images[i % len(images)])
                 latencies_ms.append((time.perf_counter() - t0) * 1000.0)
 
-    # ── Results (ADDITION: statistics not in sources) ────────────────────────
+    # -- Results (ADDITION: statistics not in sources) -----------------------
     arr     = np.array(latencies_ms)
     mean_ms = arr.mean()
     std_ms  = arr.std()
