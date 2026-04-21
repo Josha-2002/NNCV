@@ -1,17 +1,3 @@
-"""
-This script implements a training loop for the model. It is designed to be flexible, 
-allowing you to easily modify hyperparameters using a command-line argument parser.
-
-### Key Features:
-1. **Hyperparameter Tuning:** Adjust hyperparameters by parsing arguments from the `main.sh` script or directly 
-   via the command line.
-2. **Remote Execution Support:** Since this script runs on a server, training progress is not visible on the console. 
-   To address this, we use the `wandb` library for logging and tracking progress and results.
-3. **Encapsulation:** The training loop is encapsulated in a function, enabling it to be called from the main block. 
-   This ensures proper execution when the script is run directly.
-
-Feel free to customize the script as needed for your use case.
-"""
 import os
 from argparse import ArgumentParser
 
@@ -59,7 +45,7 @@ def convert_train_id_to_color(prediction: torch.Tensor) -> torch.Tensor:
 class WeightedFocalLoss(nn.Module):
     def __init__(self, weight=None, gamma=2.0, ignore_index=255):
         super().__init__()
-        # We use standard Cross Entropy, but set reduction='none' so we get the loss for EVERY pixel individually
+        # Standard Cross Entropy, but set reduction='none' so it get the loss for EVERY pixel individually
         self.ce = nn.CrossEntropyLoss(weight=weight, ignore_index=ignore_index, reduction='none')
         self.gamma = gamma
         self.ignore_index = ignore_index
@@ -149,8 +135,7 @@ def get_args_parser():
     parser.add_argument("--num-workers", type=int, default=10, help="Number of workers for data loaders")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     parser.add_argument("--experiment-id", type=str, default="segformer-training", help="Experiment ID for Weights & Biases")
-
-# NEW: Flag to easily turn off W&B for local testing
+    #Flag to easily turn off W&B for local testing
     parser.add_argument("--disable-wandb", action="store_true", help="Disable Weights & Biases logging")
 
     return parser
@@ -180,18 +165,16 @@ def main(args):
     # Define the transforms to apply to the data
     img_transform = Compose([
         ToImage(),
-        Resize(IMG_SIZE), # <--- ORIGINAL SIZE! You can change this to (256, 512) if you want to speed up training at the cost of some accuracy. Just make sure to adjust the Resize in the target_transform accordingly!
-        # Resize((256, 512)), # <--- CHANGED! ratio is now 1:2 to better match Cityscapes' original aspect ratio
+        Resize(IMG_SIZE), 
         ToDtype(torch.float32, scale=True),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), #based from segformers
         # Normalize(mean=(0.5,), std=(0.5,)),
     ])
 
     # Target transform (mask)
     target_transform = Compose([
         ToImage(),
-        # Resize((256, 512), interpolation=InterpolationMode.NEAREST), # <--- CHANGED!
-        Resize(IMG_SIZE, interpolation=InterpolationMode.NEAREST), # <--- ORIGINAL SIZE! Adjust this if you changed the image resize above.
+        Resize(IMG_SIZE, interpolation=InterpolationMode.NEAREST), 
         ToDtype(torch.int64),
     ])
     #------------------------------------SEGMENTATION-SPECIFIC TRANSFORMS------------------------------------#
@@ -220,20 +203,9 @@ def main(args):
 
     # Define the model
     model = Model(in_channels=3, n_classes=19).to(device)
-
     # Define the loss function with class imbalance weighting (you can adjust these weights based on the frequency of classes in Cityscapes or your specific needs)
-    # 0:road, 1:sidewalk, 2:building, 3:wall, 4:fence, 5:pole, 6:t-light, 7:t-sign, 8:veg, 9:terrain, 10:sky
-    # 11:person, 12:rider, 13:car, 14:truck, 15:bus, 16:train, 17:motorcycle, 18:bicycle
-    # # 1. PRINT THE CLASSES TO VERIFY
-    # print("\n--- Cityscapes Class Weights Mapping ---")
-    # for cls in Cityscapes.classes:
-    #     # We only care about the 19 official training classes (ignore 255 and -1)
-    #     if cls.train_id not in [255, -1]:
-    #         print(f"Train ID {cls.train_id}: {cls.name}")
-    # print("----------------------------------------\n")
 
-    # 2. DEFINE THE WEIGHTS
-    # The order of this list exactly matches Train IDs 0 through 18!
+    # DEFINE THE WEIGHTS
     class_weights = torch.tensor([
         0.5, # 0: road          (Suppress)
         0.8, # 1: sidewalk      (Suppress)
@@ -256,8 +228,7 @@ def main(args):
         3.0  # 18: bicycle      (SUPER BOOST)
     ]).to(device)
 
-    # 3. APPLY TO LOSS FUNCTION
-
+    # APPLY TO LOSS FUNCTION
     #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
     criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=255)
     #--------------------STANDARD CROSS ENTROPY WITH CLASS WEIGHTS-------------------#
@@ -269,9 +240,7 @@ def main(args):
     # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
     # criterion = nn.CrossEntropyLoss(ignore_index=255)
     # #--------------------STANDARD CROSS ENTROPY WITHOUT CLASS WEIGHTS (uncomment if you want to use this instead)-------------------#
-
-
-   
+  
     # ------------------- DYNAMIC OPTIMIZER SELECTION -------------------#
     if INIT_WEIGHTS == "cityscapes":
         # Strategy 1: Filtered Optimizer (Only train the head)
@@ -388,8 +357,7 @@ def main(args):
                     "vehicle_dice": vehicle_dice
                 }, step=(epoch + 1) * len(train_dataloader) - 1)
 
-            # Save best model (We can now save based on IoU instead of just loss!)
-            if valid_loss < best_valid_loss: # You could change this to `if mean_iou > best_iou:` if you prefer!
+            if valid_loss < best_valid_loss: 
                 best_valid_loss = valid_loss
                 if current_best_model_path:
                     os.remove(current_best_model_path)

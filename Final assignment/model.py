@@ -6,7 +6,7 @@ from transformers import SegformerForSemanticSegmentation
 
 # FORCE Python to check the /app directory so the Efficiency server doesn't crash
 sys.path.append('/app')
-from config import MODEL_SIZE, INIT_WEIGHTS  # Import the Central Brain!
+from config import MODEL_SIZE, INIT_WEIGHTS
 
 class Model(nn.Module):
     def __init__(self, in_channels=3, n_classes=19):
