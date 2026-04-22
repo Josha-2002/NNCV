@@ -5,7 +5,7 @@
 **Codalab Usernames:**
 - Peak Performance: `JK_URBAN_SF_B1_Adaptive`, `JK_URBAN_SF_B1_Custom`, `JK_URBAN_SF_B1_Blank`
 - Efficiency: `JK_HIGHWAY_SF_B0_Adaptive`, `JK_HIGHWAY_SF_B0_Custom`, `JK_HIGHWAY_SF_B0_Blank`
-
+- Baseline: `JK_Segf_CS_Baseline_V3`
 ---
 
 ## Overview
@@ -43,6 +43,7 @@ This repository includes several additional guides for specific workflows:
 ├── predict.py                  # Inference script for the challenge evaluation server
 ├── benchmark_fps.py            # CUDA event-based FPS benchmarking at FP32 precision
 ├── main.sh                     # Training command passed to the container on the cluster
+├── jobscript_slurm.sh          # Parameters about Snellius to train
 ├── Dockerfile                  # Container for reproducible server submission
 ├── download_docker_and_data.sh # SLURM script to download the container and dataset
 ├── README-Installation.md      # Tool installation and environment setup guide
@@ -268,21 +269,21 @@ All results below are from the official evaluation server on the unseen test set
 
 **Peak Performance (SegFormer-B1, 384x768)**
 
-| Configuration | mIoU | Human IoU | Vehicle IoU |
-|---|---|---|---|
-| U-Net Baseline | 0.4048 | 0.1006 | 0.1791 |
-| B1 Blank, Unweighted | 0.3933 | 0.1146 | 0.1912 |
-| B1 Custom (Blank + WCE) | 0.4203 | 0.1712 | 0.2350 |
-| B1 Adaptive (Pre-trained) | 0.4512 | 0.1791 | 0.2745 |
+|Codalab Usernames| Configuration | mIoU | Human IoU | Vehicle IoU |
+|---|---|---|---|---|
+|JK_Segf_CS_Baseline_V3| U-Net Baseline | 0.4048 | 0.1006 | 0.1791 |
+|JK_URBAN_SF_B1_Blank| B1 Blank, Unweighted | 0.3933 | 0.1146 | 0.1912 |
+|JK_URBAN_SF_B1_Custom| B1 Custom (Blank + WCE) | 0.4203 | 0.1712 | 0.2350 |
+|JK_URBAN_SF_B1_Adaptive| B1 Adaptive (Pre-trained) | 0.4512 | 0.1791 | 0.2745 |
 
 **Efficiency (SegFormer-B0, 256x512)**
 
-| Configuration | mIoU | FPS | GFLOPs | Size (MB) |
-|---|---|---|---|---|
-| U-Net Baseline | 0.4007 | 4.09 | 2563.5 | 65.9 |
-| B0 Blank, Unweighted | 0.3743 | 16.29 | 241.9 | 14.2 |
-| B0 Custom (Blank + WCE) | 0.4027 | 16.31 | 241.9 | 14.2 |
-| B0 Adaptive (Pre-trained) | 0.4342 | 16.29 | 241.9 | 14.2 |
+|Codalab Usernames| Configuration | mIoU | FPS | GFLOPs | TFLOPs |
+|---|---|---|---|---|---|
+|JK_Segf_CS_Baseline_V3| U-Net Baseline | 0.4007 | 4.09 | 2563.5 | 0.1913 |
+|JK_HIGHWAY_SF_B0_Blank| B0 Blank, Unweighted | 0.3743 | 16.29 | 241.9 | 1.9176 |
+|JK_HIGHWAY_SF_B0_Custom| B0 Custom (Blank + WCE) | 0.4027 | 16.31 | 241.9 | 2.0637 |
+|JK_HIGHWAY_SF_B0_Adaptive| B0 Adaptive (Pre-trained) | 0.4342 | 16.29 | 241.9 | 2.1814 |
 
 Local benchmarks (RTX 2060, FP32, batch size 1) confirmed B1 at 384x768 achieves 43 FPS and B0 at 384x768 achieves 63 FPS, satisfying the 30 FPS urban and 60 FPS highway deployment thresholds. The lower FPS reported by the evaluation server reflects the overhead of its GFLOP profiling hooks and does not represent real-world inference speed.
 
